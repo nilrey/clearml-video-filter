@@ -1,0 +1,12 @@
+поднять clearml в docker
+поднять clearml-agent на локальном хосте
+clearml-agent config
+clearml-agent daemon --queue default --foreground (--detached, -d )
+
+зайти на сайт http://localhost:8080/login 
+
+создан Task Init по задаче
+если нет запустить скрипт image_set_filter.py
+
+агент подключен к queue
+если нет 
