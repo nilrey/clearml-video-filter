@@ -1,7 +1,0 @@
-{
-    "input_path": "data/input",
-    "output_path": "data/output",
-    "input_names": ["example.mp4"],
-    "corruption_type": "gaussian_noise",
-    "severity": 3
-}

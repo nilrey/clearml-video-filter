@@ -1,0 +1,19 @@
+python scripts/image_set_filter.py   \
+--project-name "Initial Processing Scripts"   \
+--task-name "Наложение искажений на видео"   \
+--input-path "/home/sadmin/Documents/Mirror/data/input"   \
+--output-path "/home/sadmin/Documents/Mirror/data/output"   \
+--input-names "[\"gostiny_dvor_001.mp4\"]"   \
+--corruption-name gaussian_noise   \
+--severity 3
+
+python scripts/clone_task_filter.py \
+--task-id 47a546ba60fc4482a3c4c200c5d8faeb \
+--project-name "Processing Scripts" \
+--clone-task-name "Test Clone task 001"  \
+--input-path "/home/sadmin/Documents/Mirror/data/input"  \
+--output-path "/home/sadmin/Documents/Mirror/data/output7"  \
+--input-names "[\"gostiny_dvor_001.mp4\",\"example_001.mp4\"]"  \
+--corruption-name gaussian_noise  \
+--severity 5  \
+--queue-name default

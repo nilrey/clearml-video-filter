@@ -5,8 +5,16 @@ clearml-agent daemon --queue default --foreground (--detached, -d )
 
 зайти на сайт http://localhost:8080/login 
 
-создан Task Init по задаче
-если нет запустить скрипт image_set_filter.py
+главный исполняемый скрипт: scripts/image_set_filter.py
+первый локальный запуск создаст (или переиспользует) Task и создаст в нём параметры :
+--project-name "Initial Processing Scripts"   \
+--task-name "Наложение искажений на видео"   \
+--input-path "/home/sadmin/Documents/Mirror/data/input"   \
+--output-path "/home/sadmin/Documents/Mirror/data/output"   \
+--input-names "[\"gostiny_dvor_001.mp4\"]"   \
+--corruption-name gaussian_noise   \
+--severity 3
+
+дальше параметры можно менять в UI или через API — при повторном запуске скрипт возьмёт их из Task
 
 агент подключен к queue
-если нет 
