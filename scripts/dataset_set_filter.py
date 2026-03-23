@@ -5,6 +5,8 @@ import shutil
 import cv2
 from clearml import Task, Dataset
 from imagecorruptions import corrupt
+from datetime import datetime
+import json
 
 # список допустимых искажений, 
 ALLOWED_CORRUPTION_NAMES = [
@@ -14,10 +16,12 @@ ALLOWED_CORRUPTION_NAMES = [
 ]
 
 # директория для временных файлов
-BUFFER_DIR = '/home/sadmin/Documents/Mirror/data/output'
-OUTPUT_DATASETS_NAME = "Output Datasets"
+# BUFFER_DIR = '/home/sadmin/Documents/Mirror/data/output'
 # BUFFER_DIR = '/home/ubuntu/mirror_storage/storage/data/output'
-# OUTPUT_DATASETS_NAME = "MIRROR"
+BUFFER_DIR = 'D:/Tmp/Mirror/data/output'
+OUTPUT_DATASETS_NAME = "MIRROR"
+REQUIREMENTS_FILE = "requirements.txt"
+
 
 def add_filter(input_path=None, output_path=None, corruption_name="gaussian_noise", severity=5):
     if input_path is None or output_path is None:
@@ -67,12 +71,11 @@ def add_filter(input_path=None, output_path=None, corruption_name="gaussian_nois
 
 
 def get_parameter_from_task(task, param_name, default_value=None):
-    """Получает параметр из Task Hyperparameters -> General"""
+    # выбираем параметры из секции General
     if task is None:
         return default_value
     
     try:
-        # Пытаемся получить параметр из секции General
         param_value = task.get_parameter(f"General/{param_name}")
         if param_value is not None:
             print(f"Используем параметр {param_name} из Task: {param_value}")
@@ -84,7 +87,6 @@ def get_parameter_from_task(task, param_name, default_value=None):
 
 
 def save_task_parameters(task, hyperparams):
-    """Сохраняет параметры в Task"""
     if task is None:
         return
     
@@ -93,7 +95,25 @@ def save_task_parameters(task, hyperparams):
         if param_value is not None:
             task.set_parameter(f"General/{param_name}", str(param_value))
 
-
+    # Сохраняем input_dataset как строку в формате JSON
+    input_dataset = json.dumps({
+        "id": hyperparams.get("input_dataset_id"),
+        "location": Path(__file__).name
+    }, ensure_ascii=False)
+    algorithm = json.dumps({
+        "name": hyperparams.get("task_name", "Dataset Filter"),
+        "id": ""
+    }, ensure_ascii=False)
+    input_params = json.dumps({
+        "severity": hyperparams.get("severity", 5)
+    }, ensure_ascii=False)
+    task.set_configuration_object("input_dataset", input_dataset)
+    task.set_configuration_object("algorithm", algorithm)
+    task.set_configuration_object("input_params", input_params)
+    
+# input_dataset {"id":INPUT_DATASET_ID,"name":OUT_DATASET_NAME}
+# algorithm {"id":"eab875078f0f4d3b985388319ff910b7", "name": "Dataset Filter","location":"dataset_set_filter.py"}
+# input_params {"severity":SEVERITY}
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-name", required=False, help="Project name (optional if set in Task)")
@@ -110,22 +130,26 @@ def main():
     if has_cli_args:
         # Если есть аргументы, используем их для создания задачи
         task = Task.init(
-            project_name=args.project_name, 
-            task_name=args.task_name, 
+            project_name=args.project_name,
+            task_name=args.task_name,
             auto_connect_arg_parser=False,
             auto_connect_frameworks=False
         )
+        # Указываем зависимости из requirements.txt
+        # task.add_requirements(REQUIREMENTS_FILE)
     else:
-        # Если нет аргументов, пытаемся получить существующую задачу или создаем с временными именами
+        # Если нет аргументов, берем существующую задачу или создаем с временными именами
         task = Task.current_task()
         if task is None:
             # Создаем задачу с временными именами, которые потом будут переопределены параметрами
             task = Task.init(
-                project_name="Temporary Project", 
-                task_name="Temporary Task", 
+                project_name="Temporary Project",
+                task_name="Temporary Task",
                 auto_connect_arg_parser=False,
                 auto_connect_frameworks=False
             )
+            # Указываем зависимости из requirements.txt
+            # task.add_requirements(REQUIREMENTS_FILE)
     
     # Получаем параметры с приоритетом: Task параметры > аргументы командной строки > значения по умолчанию
     project_name = get_parameter_from_task(task, "project_name") or args.project_name or "Initial Scripts"
@@ -160,12 +184,12 @@ def main():
         # Примечание: project нельзя изменить после создания, но для будущих запусков сохраним параметр
     
     print(f"Параметры запуска:")
-    print(f"  Project name: {project_name}")
-    print(f"  Task name: {task_name}")
-    print(f"  Task ID: {task.id}")
-    print(f"  Input dataset ID: {input_dataset_id}")
-    print(f"  Corruption name: {corruption_name}")
-    print(f"  Severity: {severity}")
+    print(f"Project name: {project_name}")
+    print(f"Task name: {task_name}")
+    print(f"Task ID: {task.id}")
+    print(f"Input dataset ID: {input_dataset_id}")
+    print(f"Corruption name: {corruption_name}")
+    print(f"Severity: {severity}")
 
     input_dataset = Dataset.get(dataset_id=input_dataset_id)
     input_root = Path(input_dataset.get_local_copy())
@@ -177,23 +201,31 @@ def main():
     # создаем buffer_root если он не существует
     buffer_root = Path(BUFFER_DIR)
     buffer_root.mkdir(parents=True, exist_ok=True)
-    
+            
     # сохраняем файлы в buffer_root
     for p in input_files:
         out_file = buffer_root / p.name
         frame_count = add_filter(p, out_file, corruption_name, severity)
         if frame_count == 0:
             raise RuntimeError(f"Файл не создан или пуст: {out_file}")
-
-    dataset_name = f"output_{input_dataset.name}_{corruption_name}_{severity}"
-    dataset = Dataset.create(dataset_project=OUTPUT_DATASETS_NAME, dataset_name=dataset_name)
+    
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    out_dataset_name = f"Out_{input_dataset.name}_{ts}"
+    print(f"Out Dataset name: {out_dataset_name}")
+    
+    dataset = Dataset.create(dataset_project=OUTPUT_DATASETS_NAME, dataset_name=out_dataset_name)
     for f in sorted(buffer_root.iterdir()):
         if f.is_file():
             dataset.add_files(path=str(f))
     dataset.upload()
     dataset.finalize()
-    print("Датасет успешно создан", dataset.id)
-
+    if dataset.id:
+        print("Датасет успешно создан", dataset.id)
+        for f in buffer_root.iterdir():
+            if f.is_file():
+                f.unlink()
+    else:
+        print(f"Ошибка при создании датасета dataset.id={dataset.id}")
 
 if __name__ == '__main__':
     main()

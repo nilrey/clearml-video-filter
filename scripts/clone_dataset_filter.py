@@ -3,8 +3,11 @@ import argparse
 import json
 from datetime import datetime
 from typing import Any
+from pathlib import Path
 
 from clearml import Task
+
+REQUIREMENTS_FILE = "requirements.txt"
 
 
 def _get_parent_params_flat(parent: Task) -> dict[str, Any]:
@@ -83,6 +86,8 @@ def main() -> None:
         parent=parent.id,
         project=project_id,
     )
+    # Указываем зависимости из requirements.txt
+    cloned.add_requirements(REQUIREMENTS_FILE)
 
     # Собираем параметры для переопределения
     to_set: dict[str, Any] = {}

@@ -62,7 +62,7 @@ sympy==1.14.0
 tifffile==2025.10.16
 torch==2.10.0
 torchvision==0.25.0
-triton==3.6.0
+# triton==3.6.0 # disable for win 
 typing_extensions==4.15.0
 ultralytics==8.4.16
 ultralytics-thop==2.0.18
