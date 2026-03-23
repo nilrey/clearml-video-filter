@@ -17,3 +17,19 @@ python scripts/clone_task_filter.py \
 --corruption-name gaussian_noise  \
 --severity 5  \
 --queue-name default
+
+python scripts/dataset_set_filter.py \
+  --project-name "Initial Scripts" \
+  --task-name "Dataset Filter" \
+  --input-dataset-id "b1388c1bb6874bc9b7b4d78c173a333a" \
+  --corruption-name "gaussian_noise" \
+  --severity 5
+
+python scripts/clone_dataset_filter.py \
+  --task-id "c30cb35f1d40462bae15e1c593a2e939" \    # id скрипта "Dataset Filter" из Initial Scripts
+  --clone-task-name "Dataset Filter Clone 001" \  # название клонированной задачи, которая будет запущена
+  --input-dataset-id "b1388c1bb6874bc9b7b4d78c173a333a" \ # id входящего датасета 
+  --project-name "Processing Scripts" \    # название проекта для привязки создаваемого датасета
+  --corruption-name "gaussian_noise" \  # вид искажения
+  --severity 5 \                        # степерь искажения
+  --queue-name "default"                # название очереди для запуска 
