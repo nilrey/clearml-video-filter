@@ -215,10 +215,10 @@ def main():
         raise ValueError("input_dataset_id must be provided either as Task parameter or command line argument")
     
     # Преобразуем severity в int
-    # try:
-    #     severity = int(severity)
-    # except (ValueError, TypeError):
-    #     raise ValueError(f"severity must be a numeric: {severity}")
+    try:
+        severity = int(severity)
+    except (ValueError, TypeError):
+        raise ValueError(f"severity must be a numeric: {severity}")
     
     # Сохраняем параметры в Task для будущих запусков
     hyperparams = {
@@ -269,6 +269,10 @@ def main():
                 f.unlink()
     else:
         print(f"Error on dataset creation, dataset id is empty: {dataset.id}")
+        
+    task.upload_artifact('output_dataset', 
+                    {'id': dataset.id, 'name': dataset.name}, 
+                    metadata={'id': dataset.id, 'name': dataset.name})
 
 if __name__ == '__main__':
     main()
